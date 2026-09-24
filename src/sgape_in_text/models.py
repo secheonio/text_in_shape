@@ -30,6 +30,14 @@ class ShapeItem:
     def contains_point(self, px: float, py: float) -> bool:
         return self.x <= px <= self.x + self.width and self.y <= py <= self.y + self.height
 
+    def move_by(self, dx: float, dy: float) -> None:
+        self.x += dx
+        self.y += dy
+
+    def resize_by(self, dw: float, dh: float) -> None:
+        self.width += dw
+        self.height += dh
+
 
 @dataclass
 class TemplateDocument:

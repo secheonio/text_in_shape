@@ -25,6 +25,10 @@ class EditorApp(tk.Tk):
         self.selected_shape: Optional[ShapeItem] = None
         self.shape_id_counter = 1
         self.image_path: Optional[str] = None
+        self.dragging_shape: Optional[ShapeItem] = None
+        self.drag_start_x = 0
+        self.drag_start_y = 0
+        self.resize_mode = False
 
         self._build_ui()
         self._reset_canvas()
@@ -48,6 +52,8 @@ class EditorApp(tk.Tk):
         self.canvas = tk.Canvas(content, bg="#ffffff", width=1000, height=700, highlightthickness=1, highlightbackground="#999999")
         self.canvas.pack(side="left", fill="both", expand=True)
         self.canvas.bind("<Button-1>", self.on_canvas_click)
+        self.canvas.bind("<B1-Motion>", self.on_canvas_drag)
+        self.canvas.bind("<ButtonRelease-1>", self.on_canvas_release)
 
         properties = tk.Frame(content, width=280, bg="#efefef")
         properties.pack(side="right", fill="y")
@@ -138,6 +144,9 @@ class EditorApp(tk.Tk):
 
             if shape is self.selected_shape:
                 self.canvas.itemconfig(rect, width=4)
+                handle_x = shape.x + shape.width
+                handle_y = shape.y + shape.height
+                self.canvas.create_rectangle(handle_x - 6, handle_y - 6, handle_x + 6, handle_y + 6, fill="#1f6feb", outline="#0b3b8d")
 
             if shape.text:
                 inner_width = max(shape.width - shape.padding * 2, 40)
@@ -152,15 +161,60 @@ class EditorApp(tk.Tk):
                     justify="center",
                 )
 
+    def _is_resize_handle_click(self, shape: ShapeItem, event: tk.Event) -> bool:
+        handle_x = shape.x + shape.width
+        handle_y = shape.y + shape.height
+        return abs(event.x - handle_x) <= 8 and abs(event.y - handle_y) <= 8
+
     def on_canvas_click(self, event: tk.Event) -> None:
         for shape in reversed(self.document.shapes):
+            if self._is_resize_handle_click(shape, event):
+                self.selected_shape = shape
+                self.resize_mode = True
+                self._update_selection_ui()
+                self._draw_shapes()
+                return
+
             if shape.contains_point(event.x, event.y):
                 self.selected_shape = shape
+                self.dragging_shape = shape
+                self.resize_mode = False
+                self.drag_start_x = event.x
+                self.drag_start_y = event.y
                 self._update_selection_ui()
                 self._draw_shapes()
                 return
         self.selected_shape = None
+        self.dragging_shape = None
+        self.resize_mode = False
         self._update_selection_ui()
+
+    def on_canvas_drag(self, event: tk.Event) -> None:
+        if self.selected_shape is None:
+            return
+
+        if self.resize_mode:
+            shape = self.selected_shape
+            new_width = max(40, event.x - shape.x)
+            new_height = max(40, event.y - shape.y)
+            shape.width = new_width
+            shape.height = new_height
+            self._draw_shapes()
+            return
+
+        dx = event.x - self.drag_start_x
+        dy = event.y - self.drag_start_y
+        if dx == 0 and dy == 0:
+            return
+
+        self.selected_shape.move_by(dx, dy)
+        self.drag_start_x = event.x
+        self.drag_start_y = event.y
+        self._draw_shapes()
+
+    def on_canvas_release(self, event: tk.Event) -> None:
+        self.dragging_shape = None
+        self.resize_mode = False
 
     def _update_selection_ui(self) -> None:
         if self.selected_shape is None:

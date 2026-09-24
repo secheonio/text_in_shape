@@ -78,3 +78,35 @@ def test_template_background_image_round_trip(tmp_path: Path):
     loaded = TemplateManager.load_template(template_path)
     assert loaded.background_image is not None
     assert Path(loaded.background_image).exists()
+
+
+def test_shape_move_by_updates_position():
+    shape = ShapeItem(
+        id="shape_drag",
+        type="rectangle",
+        x=10,
+        y=20,
+        width=100,
+        height=80,
+    )
+
+    shape.move_by(25, -5)
+
+    assert shape.x == 35
+    assert shape.y == 15
+
+
+def test_shape_resize_by_updates_dimensions():
+    shape = ShapeItem(
+        id="shape_resize",
+        type="rectangle",
+        x=10,
+        y=20,
+        width=100,
+        height=80,
+    )
+
+    shape.resize_by(30, 20)
+
+    assert shape.width == 130
+    assert shape.height == 100
