@@ -1,4 +1,4 @@
-"""Backward-compatible package export for the legacy package name."""
+"""text_in_shape package."""
 
 from .editor import EditorApp
 from .models import Paper, ShapeItem, TemplateDocument
