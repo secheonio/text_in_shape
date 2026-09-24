@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import json
+import tempfile
 import zipfile
 from pathlib import Path
-from typing import Optional
 
 from .models import TemplateDocument
 
@@ -17,8 +17,18 @@ class TemplateManager:
         if path.suffix.lower() != ".sit":
             path = path.with_suffix(".sit")
 
+        payload = document.to_dict()
+        background_path = Path(document.background_image) if document.background_image else None
+
+        if background_path and background_path.exists():
+            payload["background_image"] = "background.png"
+        else:
+            payload["background_image"] = None
+
         with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-            archive.writestr("document.json", json.dumps(document.to_dict(), ensure_ascii=False, indent=2))
+            archive.writestr("document.json", json.dumps(payload, ensure_ascii=False, indent=2))
+            if background_path and background_path.exists():
+                archive.write(background_path, arcname="background.png")
 
         return str(path)
 
@@ -32,6 +42,12 @@ class TemplateManager:
             if "document.json" not in archive.namelist():
                 raise ValueError("Invalid .sit template: missing document.json")
             data = json.loads(archive.read("document.json").decode("utf-8"))
+
+            if "background.png" in archive.namelist():
+                extract_dir = Path(tempfile.mkdtemp(prefix="sgape_in_text_"))
+                archive.extract("background.png", extract_dir)
+                data["background_image"] = str(extract_dir / "background.png")
+
         return TemplateDocument.from_dict(data)
 
     @staticmethod

@@ -116,6 +116,16 @@ class EditorApp(tk.Tk):
         self.canvas.delete("all")
         self.canvas.create_rectangle(10, 10, self.paper.width, self.paper.height, outline="#444444", width=2)
 
+        if self.image_path:
+            try:
+                image = Image.open(self.image_path)
+                image = image.resize((int(self.paper.width), int(self.paper.height)))
+                photo = ImageTk.PhotoImage(image)
+                self.canvas.create_image(0, 0, anchor="nw", image=photo)
+                self.canvas.image = photo
+            except Exception:
+                self.image_path = None
+
         for shape in self.document.shapes:
             if shape.type == "rectangle":
                 rect = self.canvas.create_rectangle(shape.x, shape.y, shape.x + shape.width, shape.y + shape.height, outline=shape.stroke, fill=shape.fill, width=2)
@@ -141,16 +151,6 @@ class EditorApp(tk.Tk):
                     width=inner_width,
                     justify="center",
                 )
-
-        if self.image_path:
-            try:
-                image = Image.open(self.image_path)
-                image = image.resize((int(self.paper.width), int(self.paper.height)))
-                photo = ImageTk.PhotoImage(image)
-                self.canvas.create_image(0, 0, anchor="nw", image=photo)
-                self.canvas.image = photo
-            except Exception:
-                pass
 
     def on_canvas_click(self, event: tk.Event) -> None:
         for shape in reversed(self.document.shapes):
@@ -228,6 +228,7 @@ class EditorApp(tk.Tk):
         try:
             self.document = TemplateManager.load_template(file_path)
             self.paper = self.document.paper
+            self.image_path = self.document.background_image
             self.selected_shape = self.document.shapes[0] if self.document.shapes else None
             self._draw_shapes()
             self._update_selection_ui()

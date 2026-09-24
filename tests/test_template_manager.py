@@ -2,6 +2,8 @@ import json
 import zipfile
 from pathlib import Path
 
+from PIL import Image
+
 from src.sgape_in_text.models import Paper, ShapeItem, TemplateDocument
 from src.sgape_in_text.template_manager import TemplateManager
 
@@ -55,3 +57,24 @@ def test_document_json_round_trip():
     restored = TemplateDocument.from_dict(payload)
     assert restored.shapes[0].type == "circle"
     assert restored.shapes[0].text == "Sample"
+
+
+def test_template_background_image_round_trip(tmp_path: Path):
+    background = tmp_path / "background.png"
+    Image.new("RGB", (100, 100), color="blue").save(background)
+
+    document = TemplateDocument(
+        paper=Paper(width=2100, height=2970, name="A4"),
+        shapes=[],
+        background_image=str(background),
+    )
+
+    template_path = tmp_path / "with_background.sit"
+    TemplateManager.save_template(document, template_path)
+
+    with zipfile.ZipFile(template_path, "r") as archive:
+        assert "background.png" in archive.namelist()
+
+    loaded = TemplateManager.load_template(template_path)
+    assert loaded.background_image is not None
+    assert Path(loaded.background_image).exists()
