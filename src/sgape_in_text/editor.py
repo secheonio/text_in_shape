@@ -170,14 +170,26 @@ class EditorApp(tk.Tk):
         for shape in reversed(self.document.shapes):
             if self._is_resize_handle_click(shape, event):
                 self.selected_shape = shape
+                self.dragging_shape = None
                 self.resize_mode = True
+                self.drag_start_x = event.x
+                self.drag_start_y = event.y
                 self._update_selection_ui()
                 self._draw_shapes()
                 return
 
             if shape.contains_point(event.x, event.y):
+                if self.selected_shape is shape:
+                    self.dragging_shape = shape
+                    self.resize_mode = False
+                    self.drag_start_x = event.x
+                    self.drag_start_y = event.y
+                    self._update_selection_ui()
+                    self._draw_shapes()
+                    return
+
                 self.selected_shape = shape
-                self.dragging_shape = shape
+                self.dragging_shape = None
                 self.resize_mode = False
                 self.drag_start_x = event.x
                 self.drag_start_y = event.y
@@ -190,7 +202,7 @@ class EditorApp(tk.Tk):
         self._update_selection_ui()
 
     def on_canvas_drag(self, event: tk.Event) -> None:
-        if self.selected_shape is None:
+        if self.selected_shape is None or self.dragging_shape is None:
             return
 
         if self.resize_mode:
@@ -202,12 +214,13 @@ class EditorApp(tk.Tk):
             self._draw_shapes()
             return
 
+        shape = self.dragging_shape
         dx = event.x - self.drag_start_x
         dy = event.y - self.drag_start_y
         if dx == 0 and dy == 0:
             return
 
-        self.selected_shape.move_by(dx, dy)
+        shape.move_by(dx, dy)
         self.drag_start_x = event.x
         self.drag_start_y = event.y
         self._draw_shapes()
