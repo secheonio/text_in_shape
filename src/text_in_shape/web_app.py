@@ -1,4 +1,4 @@
-"""Compatibility shim for text_in_shape.web_app."""
+"""Compatibility shim for the active browser app implementation."""
 
 from src.sgape_in_text.web_app import create_app
 

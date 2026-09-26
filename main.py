@@ -1,6 +1,6 @@
 import os
 
-from src.text_in_shape.web_app import create_app
+from src.sgape_in_text.web_app import create_app
 
 app = create_app()
 
