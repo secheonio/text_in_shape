@@ -213,3 +213,15 @@ def test_web_app_uses_cad_style_shape_modes_only():
     assert b"data-shape-kind=\"polygon\"" in response.data
     assert b"data-shape-kind=\"freeform\"" in response.data
     assert b"data-shape-kind=\"circle\"" not in response.data
+
+
+def test_web_app_includes_trim_cut_keep_and_reconstruction_logic():
+    app = create_app()
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"collectTrimTargetCandidates" in response.data
+    assert b"classifyTrimSide" in response.data
+    assert b"reconstructTrimmedShape" in response.data

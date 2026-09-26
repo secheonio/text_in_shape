@@ -699,9 +699,26 @@ def create_app() -> Flask:
                     fill: ['#ffffff', '#f8fafc', '#facc15', '#fca5a5', '#93c5fd', '#86efac', '#0f172a', 'transparent']
                 };
                 let currentPaper = { ...paperSizes.A4 };
+                const documentModel = {
+                    version: 1,
+                    id: 'doc-default',
+                    paper: { ...currentPaper },
+                    view: { zoom: 1, panX: 0, panY: 0 },
+                    styles: {
+                        stroke: '#222222',
+                        fill: '#ffffff',
+                        strokeWidth: 1.2,
+                        fontFamily: 'Arial',
+                        fontSize: 40
+                    },
+                    layers: [{ id: 'layer-default', name: '기본', visible: true, locked: false, order: 1 }],
+                    selections: { selectedIds: [], primaryId: null, bounds: null },
+                    shapes: []
+                };
                 const shapes = [
                     { id: 'shape_1', type: 'polygon', x: 120, y: 140, width: 260, height: 180, sides: 6, text: 'shape in text', fill: 'transparent', stroke: '#222222', closed: true, rotation: 0 }
                 ];
+                documentModel.shapes = shapes;
                 let selectedShapeId = 'shape_1';
                 let selectedShapeIds = new Set([selectedShapeId]);
                 let currentTool = null;
@@ -1501,6 +1518,91 @@ def create_app() -> Flask:
                     const width = Number(shape.width) || 0;
                     const height = Number(shape.height) || 0;
                     return { x: x + width / 2, y: y + height / 2 };
+                }
+
+                function createLineShape(startPoint, endPoint, overrides = {}) {
+                    const sx = Number(startPoint.x) || 0;
+                    const sy = Number(startPoint.y) || 0;
+                    const ex = Number(endPoint.x) || 0;
+                    const ey = Number(endPoint.y) || 0;
+                    return applyDefaultsToNewShape({
+                        id: `shape_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`,
+                        type: 'line',
+                        x: sx,
+                        y: sy,
+                        width: ex - sx,
+                        height: ey - sy,
+                        endX: ex,
+                        endY: ey,
+                        fill: 'transparent',
+                        stroke: defaultStrokeColor,
+                        closed: false,
+                        rotation: 0,
+                        ...overrides
+                    });
+                }
+
+                function createCircleShape(center, radius, overrides = {}) {
+                    const cx = Number(center.x) || 0;
+                    const cy = Number(center.y) || 0;
+                    const r = Math.max(2, Number(radius) || 0);
+                    return applyDefaultsToNewShape({
+                        id: `shape_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`,
+                        type: 'circle',
+                        x: cx - r,
+                        y: cy - r,
+                        width: r * 2,
+                        height: r * 2,
+                        fill: 'transparent',
+                        stroke: defaultStrokeColor,
+                        closed: true,
+                        rotation: 0,
+                        cx,
+                        cy,
+                        radius: r,
+                        ...overrides
+                    });
+                }
+
+                function createArcShape(center, radius, startAngle, endAngle, overrides = {}) {
+                    const cx = Number(center.x) || 0;
+                    const cy = Number(center.y) || 0;
+                    const r = Math.max(2, Number(radius) || 0);
+                    const start = Number(startAngle) || 0;
+                    const end = Number(endAngle) || 0;
+                    return applyDefaultsToNewShape({
+                        id: `shape_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`,
+                        type: 'arc',
+                        cx,
+                        cy,
+                        radius: r,
+                        startAngle: start,
+                        endAngle: end,
+                        x: cx - r,
+                        y: cy - r,
+                        width: r * 2,
+                        height: r * 2,
+                        fill: 'transparent',
+                        stroke: defaultStrokeColor,
+                        closed: false,
+                        rotation: 0,
+                        ...overrides
+                    });
+                }
+
+                function createPolylineShape(points, overrides = {}) {
+                    const validPoints = (Array.isArray(points) ? points : []).filter(point => point && Number.isFinite(point.x) && Number.isFinite(point.y));
+                    if (!validPoints.length) return null;
+                    return applyDefaultsToNewShape({
+                        id: `shape_${Date.now()}_${Math.random().toString(16).slice(2, 7)}`,
+                        type: 'freeform',
+                        points: validPoints,
+                        closed: false,
+                        fill: 'transparent',
+                        stroke: defaultStrokeColor,
+                        rotation: 0,
+                        ...overrides
+                    });
                 }
 
                 function rotatePoint(point, center, angleRadians) {
@@ -2389,6 +2491,26 @@ def create_app() -> Flask:
                         }));
                     }
 
+                    if (shape.type === 'arc') {
+                        const cx = Number(shape.cx) || (Number(shape.x) || 0) + (Number(shape.width) || 0) / 2;
+                        const cy = Number(shape.cy) || (Number(shape.y) || 0) + (Number(shape.height) || 0) / 2;
+                        const radius = Number(shape.radius) || Math.max((Number(shape.width) || 0) / 2, 2);
+                        const start = Number.isFinite(Number(shape.startAngle)) ? Number(shape.startAngle) : 0;
+                        const end = Number.isFinite(Number(shape.endAngle)) ? Number(shape.endAngle) : Math.PI * 2;
+                        const span = ((end - start + Math.PI * 2) % (Math.PI * 2));
+                        const segments = [];
+                        const sampleCount = Math.max(12, Math.ceil(span / (Math.PI / 18)));
+                        for (let index = 0; index < sampleCount; index++) {
+                            const a = start + (span * index) / sampleCount;
+                            const b = start + (span * (index + 1)) / sampleCount;
+                            segments.push({
+                                a: { x: cx + Math.cos(a) * radius, y: cy + Math.sin(a) * radius },
+                                b: { x: cx + Math.cos(b) * radius, y: cy + Math.sin(b) * radius }
+                            });
+                        }
+                        return segments;
+                    }
+
                     if (shape.type === 'polygon' || shape.type === 'diamond') {
                         const vertices = getShapeVertices(shape);
                         return vertices.map((point, index) => ({
@@ -2532,59 +2654,68 @@ def create_app() -> Flask:
                     return findTrimTarget(point, selectedShape);
                 }
 
-                function getTrimHoverTarget(point) {
+                function collectTrimTargetCandidates(shape, point) {
+                    if (!shape || !point) return [];
+
                     const candidates = [];
+                    const segments = getShapeSegments(shape);
 
-                    for (const shape of shapes) {
-                        for (const segment of getShapeSegments(shape)) {
-                            if (!isTrimIntersectionBoundedSegment(shape, segment, point)) continue;
+                    for (const segment of segments) {
+                        if (!isTrimIntersectionBoundedSegment(shape, segment, point)) continue;
 
-                            const projected = nearestPointOnSegment(point, segment.a, segment.b);
-                            const intersections = [];
-                            for (const other of shapes) {
-                                if (other.id === shape.id) continue;
-                                for (const otherSegment of getShapeSegments(other)) {
-                                    const hit = segmentIntersection(segment.a, segment.b, otherSegment.a, otherSegment.b);
-                                    if (!hit) continue;
+                        const projected = nearestPointOnSegment(point, segment.a, segment.b);
+                        const intersections = [];
+                        for (const other of shapes) {
+                            if (other.id === shape.id) continue;
+                            for (const otherSegment of getShapeSegments(other)) {
+                                const hit = segmentIntersection(segment.a, segment.b, otherSegment.a, otherSegment.b);
+                                if (!hit) continue;
 
-                                    const hitDistanceToProjected = Math.hypot(hit.x - projected.x, hit.y - projected.y);
-                                    if (hitDistanceToProjected > MAX_TRIM_NEIGHBOR_DISTANCE) continue;
+                                const hitDistanceToProjected = Math.hypot(hit.x - projected.x, hit.y - projected.y);
+                                if (hitDistanceToProjected > MAX_TRIM_NEIGHBOR_DISTANCE) continue;
 
-                                    const gapToOther = Math.min(
-                                        pointToSegmentDistance(hit, otherSegment.a, otherSegment.b),
-                                        pointToSegmentDistance(otherSegment.a, segment.a, segment.b),
-                                        pointToSegmentDistance(otherSegment.b, segment.a, segment.b),
-                                        Math.hypot(hit.x - otherSegment.a.x, hit.y - otherSegment.a.y),
-                                        Math.hypot(hit.x - otherSegment.b.x, hit.y - otherSegment.b.y)
-                                    );
-                                    if (gapToOther > MAX_TRIM_NEIGHBOR_SEGMENT_GAP) continue;
+                                const gapToOther = Math.min(
+                                    pointToSegmentDistance(hit, otherSegment.a, otherSegment.b),
+                                    pointToSegmentDistance(otherSegment.a, segment.a, segment.b),
+                                    pointToSegmentDistance(otherSegment.b, segment.a, segment.b),
+                                    Math.hypot(hit.x - otherSegment.a.x, hit.y - otherSegment.a.y),
+                                    Math.hypot(hit.x - otherSegment.b.x, hit.y - otherSegment.b.y)
+                                );
+                                if (gapToOther > MAX_TRIM_NEIGHBOR_SEGMENT_GAP) continue;
 
-                                    intersections.push({
-                                        x: hit.x,
-                                        y: hit.y,
-                                        distance: hitDistanceToProjected
-                                    });
-                                }
+                                intersections.push({
+                                    x: hit.x,
+                                    y: hit.y,
+                                    distance: hitDistanceToProjected
+                                });
                             }
-
-                            if (!intersections.length) continue;
-
-                            const firstIntersection = intersections.sort((a, b) => a.distance - b.distance)[0];
-                            if (!firstIntersection) continue;
-
-                            const dist = pointToSegmentDistance(point, segment.a, segment.b);
-                            candidates.push({
-                                shape,
-                                segment,
-                                point: projected,
-                                intersection: firstIntersection,
-                                distance: dist
-                            });
                         }
+
+                        if (!intersections.length) continue;
+
+                        const nearest = intersections.sort((a, b) => a.distance - b.distance)[0];
+                        if (!nearest) continue;
+
+                        candidates.push({
+                            shape,
+                            segment,
+                            point: projected,
+                            intersection: nearest,
+                            distance: Math.hypot(point.x - projected.x, point.y - projected.y)
+                        });
                     }
 
-                    if (!candidates.length) return null;
-                    return candidates.sort((a, b) => a.distance - b.distance)[0];
+                    return candidates.sort((a, b) => a.distance - b.distance);
+                }
+
+                function getTrimHoverTarget(point) {
+                    if (!point) return null;
+                    const candidates = [];
+                    for (const shape of shapes) {
+                        const shapeCandidates = collectTrimTargetCandidates(shape, point);
+                        candidates.push(...shapeCandidates);
+                    }
+                    return candidates.length ? candidates[0] : null;
                 }
 
                 function getTrimNodeCandidates(shape, segment) {
@@ -2680,6 +2811,68 @@ def create_app() -> Flask:
                     return (point.x - start.x) * (end.y - start.y) - (point.y - start.y) * (end.x - start.x);
                 }
 
+                function classifyTrimSide(point, cutStart, cutEnd, referencePoint = null) {
+                    if (!point || !cutStart || !cutEnd) return 'keep';
+                    const reference = referencePoint || {
+                        x: (cutStart.x + cutEnd.x) / 2,
+                        y: (cutStart.y + cutEnd.y) / 2
+                    };
+                    const pointSide = lineSide(point, cutStart, cutEnd);
+                    const referenceSide = lineSide(reference, cutStart, cutEnd);
+                    if (Math.abs(pointSide) < 0.0001 && Math.abs(referenceSide) < 0.0001) return 'keep';
+                    return pointSide * referenceSide >= 0 ? 'keep' : 'cut';
+                }
+
+                function reconstructTrimmedShape(shape, cutStart, cutEnd) {
+                    if (!shape || !cutStart || !cutEnd) return [];
+
+                    const vertices = getShapeVertices(shape);
+                    if (vertices.length < 3) return [];
+
+                    const center = vertices.reduce((sum, vertex) => ({
+                        x: sum.x + vertex.x,
+                        y: sum.y + vertex.y
+                    }), { x: 0, y: 0 });
+                    const polygonCenter = {
+                        x: center.x / vertices.length,
+                        y: center.y / vertices.length
+                    };
+
+                    const keepVertices = [];
+                    for (let index = 0; index < vertices.length; index++) {
+                        const current = vertices[index];
+                        const next = vertices[(index + 1) % vertices.length];
+                        const currentKind = classifyTrimSide(current, cutStart, cutEnd, polygonCenter);
+                        const nextKind = classifyTrimSide(next, cutStart, cutEnd, polygonCenter);
+
+                        if (currentKind === 'keep' && nextKind === 'keep') {
+                            keepVertices.push({ ...next });
+                            continue;
+                        }
+
+                        if (currentKind === 'keep' && nextKind === 'cut') {
+                            const hit = segmentIntersection(current, next, cutStart, cutEnd);
+                            if (hit) keepVertices.push({ ...hit });
+                            continue;
+                        }
+
+                        if (currentKind === 'cut' && nextKind === 'keep') {
+                            const hit = segmentIntersection(current, next, cutStart, cutEnd);
+                            if (hit) keepVertices.push({ ...hit }, { ...next });
+                        }
+                    }
+
+                    const deduped = [];
+                    for (const point of keepVertices) {
+                        const seen = deduped.some(candidate =>
+                            Math.abs(candidate.x - point.x) < 0.01 && Math.abs(candidate.y - point.y) < 0.01
+                        );
+                        if (!seen) deduped.push(point);
+                    }
+
+                    return deduped.length >= 3 ? deduped : [];
+                }
+
                 function clipPolygonByCut(vertices, cutStart, cutEnd) {
                     if (!Array.isArray(vertices) || vertices.length < 3) {
                         return [];
@@ -2689,17 +2882,18 @@ def create_app() -> Flask:
                         x: sum.x + vertex.x,
                         y: sum.y + vertex.y
                     }), { x: 0, y: 0 });
-                    const keepPositive = lineSide({
+                    const polygonCenter = {
                         x: center.x / vertices.length,
                         y: center.y / vertices.length
-                    }, cutStart, cutEnd) >= 0;
+                    };
+                    const keepPositive = classifyTrimSide(polygonCenter, cutStart, cutEnd, polygonCenter) === 'keep';
 
                     const result = [];
                     for (let index = 0; index < vertices.length; index++) {
                         const current = vertices[index];
                         const next = vertices[(index + 1) % vertices.length];
-                        const currentSide = lineSide(current, cutStart, cutEnd) >= 0;
-                        const nextSide = lineSide(next, cutStart, cutEnd) >= 0;
+                        const currentSide = classifyTrimSide(current, cutStart, cutEnd, polygonCenter) === 'keep';
+                        const nextSide = classifyTrimSide(next, cutStart, cutEnd, polygonCenter) === 'keep';
 
                         if (currentSide === keepPositive && nextSide === keepPositive) {
                             result.push({ ...next });
@@ -2785,6 +2979,24 @@ def create_app() -> Flask:
                         shape.closed = true;
                         shape.fill = 'rgba(34, 197, 94, 0.14)';
                         shape.points = cleaned;
+                        delete shape.width;
+                        delete shape.height;
+                        delete shape.x;
+                        delete shape.y;
+                        delete shape.sides;
+                        delete shape.shapeType;
+                        delete shape.centerX;
+                        delete shape.centerY;
+                        delete shape.radius;
+                        return true;
+                    }
+
+                    const reconstructed = reconstructTrimmedShape(shape, cutStart, cutEnd);
+                    if (reconstructed.length >= 3) {
+                        shape.type = 'freeform';
+                        shape.closed = true;
+                        shape.fill = 'rgba(34, 197, 94, 0.14)';
+                        shape.points = reconstructed;
                         delete shape.width;
                         delete shape.height;
                         delete shape.x;
@@ -3121,39 +3333,19 @@ def create_app() -> Flask:
 
                     if (currentTool === 'line') {
                         if (!activeDraftShape || activeDraftShape.type !== 'line') {
-                            activeDraftShape = {
-                                id: `shape_${Date.now()}`,
-                                type: 'line',
-                                x: point.x,
-                                y: point.y,
-                                width: 0,
-                                height: 0,
-                                endX: point.x,
-                                endY: point.y,
-                                text: '',
-                                fill: 'transparent',
-                                stroke: defaultStrokeColor,
-                                closed: false,
-                                cadMode: true
-                            };
+                            activeDraftShape = createLineShape(point, point, {
+                                id: `draft_${Date.now()}`,
+                                cadMode: true,
+                                text: ''
+                            });
                             drawPaper();
                             return;
                         }
 
-                        const shape = applyDefaultsToNewShape({
-                            ...activeDraftShape,
-                            id: `shape_${Date.now()}`,
-                            type: 'line',
-                            x: activeDraftShape.x,
-                            y: activeDraftShape.y,
-                            endX: point.x,
-                            endY: point.y,
-                            width: point.x - activeDraftShape.x,
-                            height: point.y - activeDraftShape.y,
-                            fill: 'transparent',
-                            stroke: defaultStrokeColor,
-                            closed: false
-                        });
+                        const shape = createLineShape(
+                            { x: activeDraftShape.x, y: activeDraftShape.y },
+                            { x: point.x, y: point.y }
+                        );
                         shapes.push(shape);
                         selectedShapeId = shape.id;
                         document.getElementById('selectedShape').textContent = shape.id;
@@ -3167,60 +3359,35 @@ def create_app() -> Flask:
 
                     if (currentTool === 'arc') {
                         if (!activeDraftShape || activeDraftShape.type !== 'arc') {
-                            activeDraftShape = {
-                                id: `shape_${Date.now()}`,
-                                type: 'arc',
-                                cx: point.x,
-                                cy: point.y,
-                                radius: 0,
-                                startAngle: 0,
-                                endAngle: 0,
-                                x: point.x,
-                                y: point.y,
-                                width: 0,
-                                height: 0,
-                                text: '',
-                                fill: 'transparent',
-                                stroke: defaultStrokeColor,
-                                closed: false,
+                            activeDraftShape = createArcShape(point, 0, 0, 0, {
+                                id: `draft_${Date.now()}`,
                                 cadMode: true,
                                 startPoint: { x: point.x, y: point.y },
-                                endPoint: { x: point.x, y: point.y }
-                            };
-                        } else {
-                            const center = { x: activeDraftShape.cx, y: activeDraftShape.cy };
-                            const endPoint = { x: point.x, y: point.y };
-                            const radius = Math.hypot(point.x - center.x, point.y - center.y);
-                            const startAngle = Math.atan2(activeDraftShape.startPoint.y - center.y, activeDraftShape.startPoint.x - center.x);
-                            const endAngle = Math.atan2(endPoint.y - center.y, endPoint.x - center.x);
-                            const shape = applyDefaultsToNewShape({
-                                ...activeDraftShape,
-                                id: `shape_${Date.now()}`,
-                                type: 'arc',
-                                cx: center.x,
-                                cy: center.y,
-                                radius,
-                                startAngle,
-                                endAngle,
-                                x: center.x - radius,
-                                y: center.y - radius,
-                                width: radius * 2,
-                                height: radius * 2,
-                                fill: 'transparent',
-                                stroke: defaultStrokeColor,
-                                closed: false
+                                endPoint: { x: point.x, y: point.y },
+                                text: ''
                             });
-                            shapes.push(shape);
-                            selectedShapeId = shape.id;
-                            document.getElementById('selectedShape').textContent = shape.id;
-                            activeDraftShape = null;
-                            currentTool = null;
-                            setActiveToolButton(null);
                             drawPaper();
-                            saveEditorState();
                             return;
                         }
+
+                        const center = { x: activeDraftShape.cx, y: activeDraftShape.cy };
+                        const startPoint = activeDraftShape.startPoint || center;
+                        const endPoint = { x: point.x, y: point.y };
+                        const radius = Math.max(4, Math.hypot(endPoint.x - center.x, endPoint.y - center.y));
+                        const startAngle = Math.atan2(startPoint.y - center.y, startPoint.x - center.x);
+                        const endAngle = Math.atan2(endPoint.y - center.y, endPoint.x - center.x);
+                        const shape = createArcShape(center, radius, startAngle, endAngle, {
+                            stroke: defaultStrokeColor,
+                            fill: 'transparent'
+                        });
+                        shapes.push(shape);
+                        selectedShapeId = shape.id;
+                        document.getElementById('selectedShape').textContent = shape.id;
+                        activeDraftShape = null;
+                        currentTool = null;
+                        setActiveToolButton(null);
                         drawPaper();
+                        saveEditorState();
                         return;
                     }
 
