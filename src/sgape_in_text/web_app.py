@@ -353,11 +353,14 @@ def create_app() -> Flask:
                     display: flex;
                     gap: 16px;
                     padding: 16px;
+                    width: 100%;
                     height: calc(100vh - 72px);
                     overflow: hidden;
                 }
                 .canvas-panel {
-                    flex: 1;
+                    flex: 1 1 auto;
+                    width: 100%;
+                    min-width: 0;
                     background: #ececec;
                     border: none;
                     border-radius: 10px;
@@ -725,6 +728,8 @@ def create_app() -> Flask:
                         </div>
                     </aside>
                 </div>
+            <script>
+                const canvas = document.getElementById('editorCanvas');
                 const customPaperWidthInput = document.getElementById('customPaperWidth');
                 const customPaperHeightInput = document.getElementById('customPaperHeight');
                 const rotationDegreesInput = document.getElementById('rotationDegrees');
@@ -1039,16 +1044,20 @@ def create_app() -> Flask:
                 }
 
                 function resizeCanvasToPaper() {
-                    const rect = canvas.getBoundingClientRect();
-                    const width = Math.max(900, Math.round(rect.width || window.innerWidth * 0.72));
-                    const height = Math.max(600, Math.round(rect.height || window.innerHeight * 0.68));
+                    const panel = canvas.parentElement;
+                    const panelRect = panel ? panel.getBoundingClientRect() : null;
+                    const width = Math.max(600, Math.round((panelRect && panelRect.width > 0 ? panelRect.width : window.innerWidth * 0.72)));
+                    const height = Math.max(400, Math.round((panelRect && panelRect.height > 0 ? panelRect.height : window.innerHeight * 0.68)));
                     const ratio = Math.min(window.devicePixelRatio || 1, 2);
                     canvas.width = Math.max(1, Math.round(width * ratio));
                     canvas.height = Math.max(1, Math.round(height * ratio));
-                    canvas.style.width = '100%';
-                    canvas.style.height = '100%';
+                    canvas.style.width = `${width}px`;
+                    canvas.style.height = `${height}px`;
                     canvas.style.maxHeight = 'none';
                     canvas.style.objectFit = 'fill';
+                    if (panel) {
+                        panel.style.width = `${width}px`;
+                    }
                     if (ctx) {
                         ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
                     }
@@ -2486,11 +2495,34 @@ def create_app() -> Flask:
                 }
 
                 document.getElementById('swapPaperOrientation').addEventListener('click', () => {
+                    const selectedPaperName = paperSelect.value;
                     const currentWidth = Number(customPaperWidthInput.value || 210);
                     const currentHeight = Number(customPaperHeightInput.value || 297);
-                    customPaperWidthInput.value = currentHeight;
-                    customPaperHeightInput.value = currentWidth;
-                    isLandscapeMode = currentHeight >= currentWidth;
+                    const swappedWidth = currentHeight;
+                    const swappedHeight = currentWidth;
+
+                    customPaperWidthInput.value = swappedWidth;
+                    customPaperHeightInput.value = swappedHeight;
+                    isLandscapeMode = swappedWidth >= swappedHeight;
+
+                    if (selectedPaperName && selectedPaperName !== 'Custom') {
+                        const preset = PAPER_MM[selectedPaperName] || paperSizes[selectedPaperName];
+                        if (preset) {
+                            paperSelect.value = selectedPaperName;
+                            currentPaper = {
+                                width: mmToPixel(swappedWidth),
+                                height: mmToPixel(swappedHeight),
+                                label: selectedPaperName
+                            };
+                            clampPaperPan();
+                            resizeCanvasToPaper();
+                            drawPaper();
+                            updateOrientationButton();
+                            saveEditorState();
+                            return;
+                        }
+                    }
+
                     applyCustomPaperInputs();
                 });
 
@@ -3402,13 +3434,6 @@ def create_app() -> Flask:
                             endY: point.y,
                             moved: false
                         };
-
-                        if (!event.shiftKey) {
-                            selectedShapeIds.clear();
-                            selectedShapeId = null;
-                            const selectedLabelEl = document.getElementById('selectedShape');
-                            if (selectedLabelEl) selectedLabelEl.textContent = '없음';
-                        }
                         drawPaper();
                         return;
                     }

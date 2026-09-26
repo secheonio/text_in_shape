@@ -227,6 +227,18 @@ def test_web_app_uses_centered_paper_metrics_and_float_window_defaults():
     assert b"aria-expanded" in response.data
 
 
+def test_web_app_keeps_selected_paper_label_when_swapping_orientation():
+    app = create_app()
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"const selectedPaperName = paperSelect.value;" in response.data
+    assert b"paperSelect.value = selectedPaperName;" in response.data
+    assert b"selectedPaperName && selectedPaperName !== 'Custom'" in response.data
+
+
 def test_web_app_includes_trim_cut_keep_and_reconstruction_logic():
     app = create_app()
     client = app.test_client()
