@@ -727,6 +727,7 @@ def create_app() -> Flask:
                 let isDrawingFreeform = false;
                 let hoverHandleName = null;
                 let trimHoverTarget = null;
+                let trimDragState = null;
                 let dragState = null;
                 let objectSelectDragState = null;
                 let activeDraftShape = null;
@@ -2083,8 +2084,8 @@ def create_app() -> Flask:
                     const dirLength = Math.hypot(dirX, dirY) || 1;
                     const normalX = -dirY / dirLength;
                     const normalY = dirX / dirLength;
-                    const stripWidth = 20;
-                    const keepSide = lineSide(polygonCenter, cutStart, cutEnd) >= 0 ? 1 : -1;
+                    const stripWidth = 18;
+                    const keepSide = lineSide(polygonCenter, { x: cutStart.x, y: cutStart.y }, { x: cutEnd.x, y: cutEnd.y }) >= 0 ? 1 : -1;
                     const keepOffset = { x: normalX * keepSide * stripWidth, y: normalY * keepSide * stripWidth };
                     const cutOffset = { x: normalX * -keepSide * stripWidth, y: normalY * -keepSide * stripWidth };
                     const keepStart = { x: cutStart.x + keepOffset.x, y: cutStart.y + keepOffset.y };
@@ -2098,8 +2099,8 @@ def create_app() -> Flask:
                     ctx2d.lineCap = 'round';
                     ctx2d.lineJoin = 'round';
 
-                    ctx2d.fillStyle = keepSide >= 0 ? 'rgba(34, 197, 94, 0.16)' : 'rgba(239, 68, 68, 0.18)';
-                    ctx2d.strokeStyle = keepSide >= 0 ? 'rgba(34, 197, 94, 0.9)' : 'rgba(239, 68, 68, 0.9)';
+                    ctx2d.fillStyle = keepSide >= 0 ? 'rgba(34, 197, 94, 0.18)' : 'rgba(239, 68, 68, 0.18)';
+                    ctx2d.strokeStyle = keepSide >= 0 ? '#16a34a' : '#dc2626';
                     ctx2d.lineWidth = 1.5;
                     ctx2d.beginPath();
                     ctx2d.moveTo(cutStart.x, cutStart.y);
@@ -2110,8 +2111,8 @@ def create_app() -> Flask:
                     ctx2d.fill();
                     ctx2d.stroke();
 
-                    ctx2d.fillStyle = keepSide >= 0 ? 'rgba(239, 68, 68, 0.16)' : 'rgba(34, 197, 94, 0.14)';
-                    ctx2d.strokeStyle = keepSide >= 0 ? 'rgba(239, 68, 68, 0.9)' : 'rgba(34, 197, 94, 0.9)';
+                    ctx2d.fillStyle = keepSide >= 0 ? 'rgba(239, 68, 68, 0.1)' : 'rgba(34, 197, 94, 0.1)';
+                    ctx2d.strokeStyle = keepSide >= 0 ? '#dc2626' : '#16a34a';
                     ctx2d.beginPath();
                     ctx2d.moveTo(cutStart.x, cutStart.y);
                     ctx2d.lineTo(cutEnd.x, cutEnd.y);
@@ -2121,10 +2122,10 @@ def create_app() -> Flask:
                     ctx2d.fill();
                     ctx2d.stroke();
 
-                    ctx2d.shadowColor = keepSide >= 0 ? 'rgba(22, 163, 74, 0.55)' : 'rgba(239, 68, 68, 0.55)';
-                    ctx2d.shadowBlur = 18;
-                    ctx2d.strokeStyle = keepSide >= 0 ? 'rgba(16, 185, 129, 0.95)' : 'rgba(239, 68, 68, 0.95)';
-                    ctx2d.lineWidth = 7;
+                    ctx2d.shadowColor = keepSide >= 0 ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                    ctx2d.shadowBlur = 14;
+                    ctx2d.strokeStyle = keepSide >= 0 ? '#22c55e' : '#ef4444';
+                    ctx2d.lineWidth = 6;
                     ctx2d.beginPath();
                     ctx2d.moveTo(segmentA.x, segmentA.y);
                     ctx2d.lineTo(segmentB.x, segmentB.y);
@@ -2132,8 +2133,8 @@ def create_app() -> Flask:
 
                     ctx2d.shadowBlur = 0;
                     ctx2d.strokeStyle = '#0f172a';
-                    ctx2d.lineWidth = 1.2;
-                    ctx2d.setLineDash([7, 5]);
+                    ctx2d.lineWidth = 1.1;
+                    ctx2d.setLineDash([6, 5]);
                     ctx2d.beginPath();
                     ctx2d.moveTo(cutStart.x, cutStart.y);
                     ctx2d.lineTo(cutEnd.x, cutEnd.y);
@@ -2155,21 +2156,21 @@ def create_app() -> Flask:
                     ctx2d.fill();
 
                     ctx2d.strokeStyle = keepSide >= 0 ? '#22c55e' : '#ef4444';
-                    ctx2d.lineWidth = 2.4;
+                    ctx2d.lineWidth = 2.2;
                     ctx2d.beginPath();
                     ctx2d.moveTo(cutStart.x, cutStart.y);
                     ctx2d.lineTo(cutEnd.x, cutEnd.y);
                     ctx2d.stroke();
 
-                    const keepLabelX = cutStart.x + dirX * 0.5 + normalX * (keepSide >= 0 ? 18 : -18);
-                    const keepLabelY = cutStart.y + dirY * 0.5 + normalY * (keepSide >= 0 ? 18 : -18);
-                    const cutLabelX = cutStart.x + dirX * 0.5 + normalX * (keepSide >= 0 ? -18 : 18);
-                    const cutLabelY = cutStart.y + dirY * 0.5 + normalY * (keepSide >= 0 ? -18 : 18);
+                    const keepLabelX = cutStart.x + dirX * 0.5 + normalX * (keepSide >= 0 ? 16 : -16);
+                    const keepLabelY = cutStart.y + dirY * 0.5 + normalY * (keepSide >= 0 ? 16 : -16);
+                    const cutLabelX = cutStart.x + dirX * 0.5 + normalX * (keepSide >= 0 ? -16 : 16);
+                    const cutLabelY = cutStart.y + dirY * 0.5 + normalY * (keepSide >= 0 ? -16 : 16);
 
-                    ctx2d.font = 'bold 12px sans-serif';
-                    ctx2d.fillStyle = keepSide >= 0 ? '#15803d' : '#dc2626';
+                    ctx2d.font = 'bold 11px sans-serif';
+                    ctx2d.fillStyle = keepSide >= 0 ? '#15803d' : '#b91c1c';
                     ctx2d.fillText('KEEP', keepLabelX, keepLabelY);
-                    ctx2d.fillStyle = keepSide >= 0 ? '#dc2626' : '#15803d';
+                    ctx2d.fillStyle = keepSide >= 0 ? '#b91c1c' : '#15803d';
                     ctx2d.fillText('CUT', cutLabelX, cutLabelY);
 
                     ctx2d.restore();
@@ -2483,6 +2484,15 @@ def create_app() -> Flask:
 
                 function getShapeSegments(shape) {
                     if (!shape) return [];
+
+                    if (shape.type === 'line') {
+                        const x2 = Number.isFinite(shape.endX) ? shape.endX : shape.x + shape.width;
+                        const y2 = Number.isFinite(shape.endY) ? shape.endY : shape.y + shape.height;
+                        return [{
+                            a: { x: shape.x, y: shape.y },
+                            b: { x: x2, y: y2 }
+                        }];
+                    }
 
                     if (shape.type === 'freeform' && Array.isArray(shape.points) && shape.points.length > 1) {
                         return shape.points.slice(1).map((point, index) => ({
@@ -3222,6 +3232,11 @@ def create_app() -> Flask:
 
                     if (currentTool === 'trim') {
                         const trimCandidate = getTrimHoverTarget(point);
+                        trimDragState = trimCandidate ? {
+                            start: point,
+                            current: point,
+                            candidate: trimCandidate
+                        } : null;
 
                         if (trimCandidate && trimCandidate.shape) {
                             const trimmed = applyTrimToShape(trimCandidate.shape, trimCandidate.point, trimCandidate.intersection);
@@ -3229,6 +3244,7 @@ def create_app() -> Flask:
                                 selectedShapeId = null;
                                 document.getElementById('selectedShape').textContent = '없음';
                                 trimHoverTarget = null;
+                                trimDragState = null;
                                 drawPaper();
                                 saveEditorState();
                             }
@@ -3566,6 +3582,18 @@ def create_app() -> Flask:
                     }
 
                     if (currentTool === 'trim') {
+                        if (trimDragState) {
+                            trimDragState.current = pointer;
+                            const dragCandidate = getTrimHoverTarget(pointer) || trimDragState.candidate;
+                            if (dragCandidate && dragCandidate.shape) {
+                                trimHoverTarget = dragCandidate;
+                            } else {
+                                trimHoverTarget = null;
+                            }
+                            drawPaper();
+                            return;
+                        }
+
                         const nextTrimHoverTarget = getTrimHoverTarget(pointer);
                         if (nextTrimHoverTarget !== trimHoverTarget) {
                             trimHoverTarget = nextTrimHoverTarget;
@@ -3743,6 +3771,26 @@ def create_app() -> Flask:
                 });
 
                 canvas.addEventListener('mouseup', (event) => {
+                    if (currentTool === 'trim' && trimDragState) {
+                        const point = getCanvasPoint(event);
+                        const finalTarget = getTrimHoverTarget(point) || trimDragState.candidate;
+                        if (finalTarget && finalTarget.shape) {
+                            const trimmed = applyTrimToShape(finalTarget.shape, finalTarget.point, finalTarget.intersection);
+                            if (trimmed) {
+                                selectedShapeId = null;
+                                document.getElementById('selectedShape').textContent = '없음';
+                                trimHoverTarget = null;
+                                trimDragState = null;
+                                drawPaper();
+                                saveEditorState();
+                            }
+                        }
+                        trimDragState = null;
+                        trimHoverTarget = null;
+                        drawPaper();
+                        return;
+                    }
+
                     if (objectSelectDragState) {
                         const clickPoint = { x: objectSelectDragState.startX, y: objectSelectDragState.startY };
                         const dragSize = Math.hypot(
