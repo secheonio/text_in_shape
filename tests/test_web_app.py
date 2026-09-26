@@ -22,7 +22,7 @@ def test_web_app_includes_trim_tool_button():
     assert b"data-tool=\"trim\"" in response.data
 
 
-def test_web_app_uses_consolidated_shape_selector():
+def test_web_app_uses_cad_shape_toolbar_for_line_circle_arc_polygon_freeform():
     app = create_app()
     client = app.test_client()
 
@@ -30,13 +30,13 @@ def test_web_app_uses_consolidated_shape_selector():
 
     assert response.status_code == 200
     assert b"shape-mode-button" in response.data
-    assert b"shape-side-btn" in response.data
     assert b"data-shape-kind=\"line\"" in response.data
+    assert b"data-shape-kind=\"circle\"" in response.data
     assert b"data-shape-kind=\"arc\"" in response.data
+    assert b"data-shape-kind=\"polygon\"" in response.data
     assert b"data-shape-kind=\"freeform\"" in response.data
-    assert b"data-shape-kind=\"circle\"" not in response.data
-    assert b"data-sides=\"12\"" in response.data
-    assert b"data-sides=\"13\"" not in response.data
+    assert b"data-shape-kind=\"polyline\"" not in response.data
+    assert b"shape-side-btn" not in response.data
 
 
 def test_web_app_uses_projected_trim_edge_logic():
@@ -209,10 +209,11 @@ def test_web_app_uses_cad_style_shape_modes_only():
 
     assert response.status_code == 200
     assert b"data-shape-kind=\"line\"" in response.data
+    assert b"data-shape-kind=\"circle\"" in response.data
     assert b"data-shape-kind=\"arc\"" in response.data
     assert b"data-shape-kind=\"polygon\"" in response.data
     assert b"data-shape-kind=\"freeform\"" in response.data
-    assert b"data-shape-kind=\"circle\"" not in response.data
+    assert b"data-shape-kind=\"polyline\"" not in response.data
 
 
 def test_web_app_uses_centered_paper_metrics_and_float_window_defaults():

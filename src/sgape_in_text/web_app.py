@@ -177,8 +177,7 @@ def create_app() -> Flask:
                     background: linear-gradient(180deg, #f3f7fb 0%, #e8edf3 100%);
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 0 rgba(15, 23, 42, 0.04);
                 }
-                .shape-mode-button,
-                .shape-side-btn {
+                .shape-mode-button {
                     display: inline-flex;
                     align-items: center;
                     justify-content: center;
@@ -195,27 +194,29 @@ def create_app() -> Flask:
                     padding: 0 7px;
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(148,163,184,0.14), 0 1px 0 rgba(15,23,42,0.04);
                 }
-                .shape-mode-button:hover,
-                .shape-side-btn:hover {
+                .shape-mode-button:hover {
                     background: linear-gradient(180deg, #ffffff 0%, #f0f6ff 100%);
                     border-color: #9bb8dd;
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.95), 0 1px 2px rgba(59,130,246,0.08), 0 0 0 1px rgba(96,165,250,0.08);
                     transform: translateY(-1px);
                 }
                 .shape-mode-button[data-shape-kind="arc"]:hover .cad-icon,
+                .shape-mode-button[data-shape-kind="circle"]:hover .cad-icon,
                 .shape-mode-button[data-shape-kind="line"]:hover .cad-icon,
-                .shape-mode-button[data-shape-kind="freeform"]:hover .cad-icon,
-                .shape-mode-button[data-shape-kind="polygon"]:hover .cad-icon {
+                .shape-mode-button[data-shape-kind="polygon"]:hover .cad-icon,
+                .shape-mode-button[data-shape-kind="freeform"]:hover .cad-icon {
                     transform: scale(1.18);
                 }
                 .shape-mode-button[data-shape-kind="arc"]:hover .cad-icon { color: #0f766e; }
+                .shape-mode-button[data-shape-kind="circle"]:hover .cad-icon { color: #0ea5e9; }
                 .shape-mode-button[data-shape-kind="line"]:hover .cad-icon { color: #2563eb; }
-                .shape-mode-button[data-shape-kind="freeform"]:hover .cad-icon { color: #b45309; }
                 .shape-mode-button[data-shape-kind="polygon"]:hover .cad-icon { color: #7c3aed; }
+                .shape-mode-button[data-shape-kind="freeform"]:hover .cad-icon { color: #b45309; }
                 .shape-mode-button[data-shape-kind="arc"].is-active .cad-icon { color: #0f766e; }
+                .shape-mode-button[data-shape-kind="circle"].is-active .cad-icon { color: #0284c7; }
                 .shape-mode-button[data-shape-kind="line"].is-active .cad-icon { color: #1d4ed8; }
-                .shape-mode-button[data-shape-kind="freeform"].is-active .cad-icon { color: #b45309; }
                 .shape-mode-button[data-shape-kind="polygon"].is-active .cad-icon { color: #6d28d9; }
+                .shape-mode-button[data-shape-kind="freeform"].is-active .cad-icon { color: #b45309; }
                 .cad-icon {
                     position: relative;
                     display: inline-flex;
@@ -251,55 +252,25 @@ def create_app() -> Flask:
                     letter-spacing: 0.02em;
                     font-variant-numeric: tabular-nums;
                 }
-                .shape-mode-button.is-active,
-                .shape-side-btn.is-active {
+                .shape-mode-button.is-active {
                     background: linear-gradient(180deg, #dfeefc 0%, #c9dffb 100%);
                     border-color: #5d9cf7;
                     box-shadow: inset 0 1px 0 rgba(255,255,255,0.86), inset 0 -1px 0 rgba(59,130,246,0.1), 0 0 0 1px rgba(59,130,246,0.12), 0 2px 6px rgba(59,130,246,0.16);
                     color: #0f172a;
                     transform: translateY(0);
                 }
-                .shape-mode-button.is-active .cad-icon,
-                .shape-side-btn.is-active .cad-icon,
-                .shape-side-btn.is-active .polygon-pill {
+                .shape-mode-button.is-active .cad-icon {
                     color: #123a7a;
                     transform: scale(1.04);
                 }
-                .shape-mode-button:active,
-                .shape-side-btn:active {
+                .shape-mode-button:active {
                     background: linear-gradient(180deg, #d7ebff 0%, #bfd8fb 100%);
                     box-shadow: inset 0 2px 5px rgba(37,99,235,0.14), inset 0 1px 0 rgba(255,255,255,0.75);
                     transform: translateY(1px) scale(0.995);
                 }
-                .shape-mode-button:focus-visible,
-                .shape-side-btn:focus-visible {
+                .shape-mode-button:focus-visible {
                     outline: 2px solid rgba(37,99,235,0.7);
                     outline-offset: 2px;
-                }
-                .shape-side-picker {
-                    display: grid;
-                    grid-template-columns: repeat(7, minmax(16px, 1fr));
-                    align-items: center;
-                    gap: 2px;
-                    padding: 4px 5px;
-                    border: 1px solid #c1ceda;
-                    border-radius: 8px;
-                    background: linear-gradient(180deg, #f5f9fc 0%, #e8edf3 100%);
-                    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 0 rgba(15, 23, 42, 0.04);
-                    max-width: 200px;
-                    min-width: 176px;
-                }
-                .shape-side-btn {
-                    width: 100%;
-                    min-width: 0;
-                    height: 23px;
-                    font-size: 10.5px;
-                    padding: 0 2px;
-                    border-radius: 5px;
-                    font-weight: 700;
-                    letter-spacing: 0.03em;
-                    font-variant-numeric: tabular-nums;
-                    background: linear-gradient(180deg, #ffffff 0%, #edf3f8 100%);
                 }
                 .toolbar button.tool-trim { background: #dcfce7; border-color: #22c55e; font-size: 20px; padding: 7px 12px; min-width: 42px; }
                 .toolbar button.tool-object-select {
@@ -594,71 +565,57 @@ def create_app() -> Flask:
                     <button type="button" class="tool-btn shape-mode-button is-active" data-shape-kind="line" title="직선" aria-label="직선">
                         <span class="cad-icon" aria-hidden="true">
                             <svg viewBox="0 0 16 16" role="img" aria-hidden="true">
-                                <path d="M2.5 12.5L12.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
-                                <path d="M10.5 3.5h2v2" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2 12L14 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                                <path d="M11 3.5L14 4L13 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
                             </svg>
                         </span>
                     </button>
-                    <button type="button" class="tool-btn shape-mode-button" data-shape-kind="arc" title="원/호" aria-label="원/호">
+                    <button type="button" class="tool-btn shape-mode-button" data-shape-kind="circle" title="원" aria-label="원">
                         <span class="cad-icon" aria-hidden="true">
                             <svg viewBox="0 0 16 16" role="img" aria-hidden="true">
-                                <circle cx="8" cy="8" r="5" fill="none" stroke="currentColor" stroke-width="1.5"/>
-                                <path d="M4 11.5A4.5 4.5 0 0 1 11.5 4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
-                                <path d="M8 2v12M2 8h12" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.75"/>
+                                <circle cx="8" cy="8" r="5.2" fill="none" stroke="currentColor" stroke-width="1.6"/>
+                                <circle cx="8" cy="8" r="1.8" fill="currentColor" opacity="0.7"/>
+                            </svg>
+                        </span>
+                    </button>
+                    <button type="button" class="tool-btn shape-mode-button" data-shape-kind="arc" title="호" aria-label="호">
+                        <span class="cad-icon" aria-hidden="true">
+                            <svg viewBox="0 0 16 16" role="img" aria-hidden="true">
+                                <path d="M4 11.5A4.8 4.8 0 0 1 11.4 4.6" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/>
+                                <circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.1" opacity="0.7"/>
+                                <circle cx="11.4" cy="4.6" r="1.2" fill="currentColor" opacity="0.85"/>
                             </svg>
                         </span>
                     </button>
                     <button type="button" class="tool-btn shape-mode-button" data-shape-kind="polygon" title="다각형" aria-label="다각형">
                         <span class="cad-icon" aria-hidden="true">
                             <svg viewBox="0 0 16 16" role="img" aria-hidden="true">
-                                <path d="M8 2.3L12.8 5.1V10.9L8 13.7L3.2 10.9V5.1L8 2.3Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
-                                <path d="M8 2.3v11.4M3.2 5.1l9.6 5.8M12.8 5.1L3.2 10.9" fill="none" stroke="currentColor" stroke-width="0.9" stroke-linecap="round" opacity="0.6"/>
+                                <path d="M8 2.1L12.1 4.7L12.8 9.6L9.9 12.9H6.1L3.2 9.6L3.9 4.7L8 2.1Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                                <circle cx="8" cy="2.1" r="0.9" fill="currentColor"/>
+                                <circle cx="12.1" cy="4.7" r="0.9" fill="currentColor"/>
+                                <circle cx="12.8" cy="9.6" r="0.9" fill="currentColor"/>
+                                <circle cx="9.9" cy="12.9" r="0.9" fill="currentColor"/>
+                                <circle cx="6.1" cy="12.9" r="0.9" fill="currentColor"/>
+                                <circle cx="3.2" cy="9.6" r="0.9" fill="currentColor"/>
+                                <circle cx="3.9" cy="4.7" r="0.9" fill="currentColor"/>
                             </svg>
                         </span>
                     </button>
                     <button type="button" class="tool-btn shape-mode-button" data-shape-kind="freeform" title="자유형" aria-label="자유형">
                         <span class="cad-icon" aria-hidden="true">
                             <svg viewBox="0 0 16 16" role="img" aria-hidden="true">
-                                <path d="M2 10.5C3.1 8.5 4.3 7 5.5 7c1.6 0 2 2.2 3.2 2.2 1.1 0 1.8-1.7 2.9-2.1 1.1-.4 2.4.8 2.4 1.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M3 12.5H13" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" opacity="0.7"/>
+                                <path d="M2 10.5C3.1 8.5 4.3 7 5.6 7C7.2 7 7.8 8.9 9.1 9.1C10.3 9.3 11.1 7.6 12.4 7.3C13.4 7.1 14.2 7.9 14.2 9.1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M2.5 12.3H13.5" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" opacity="0.8"/>
                             </svg>
                         </span>
                     </button>
                 </div>
-                <div class="shape-side-picker" aria-label="다각형 수 선택">
-                    <button type="button" class="shape-side-btn is-active" data-sides="3" title="3각">
-                        <span class="polygon-pill">3</span>
-                    </button>
-                    <button type="button" class="shape-side-btn" data-sides="4" title="4각">
-                        <span class="polygon-pill">4</span>
-                    </button>
-                    <button type="button" class="shape-side-btn" data-sides="5" title="5각">
-                        <span class="polygon-pill">5</span>
-                    </button>
-                    <button type="button" class="shape-side-btn" data-sides="6" title="6각">
-                        <span class="polygon-pill">6</span>
-                    </button>
-                    <button type="button" class="shape-side-btn" data-sides="8" title="8각">
-                        <span class="polygon-pill">8</span>
-                    </button>
-                    <button type="button" class="shape-side-btn" data-sides="12" title="12각">
-                        <span class="polygon-pill">12</span>
-                    </button>
-                    <button type="button" class="shape-side-btn" data-sides="24" title="24각">
-                        <span class="polygon-pill">24</span>
-                    </button>
-                </div>
                 <select id="shapeTypeSelect" title="도형 종류" style="display:none;">
                     <option value="line" selected>직선</option>
-                    <option value="arc">원/호</option>
+                    <option value="circle">원</option>
+                    <option value="arc">호</option>
+                    <option value="polygon">다각형</option>
                     <option value="freeform">자유형</option>
-                    <option value="3">3각</option>
-                    <option value="4">4각</option>
-                    <option value="5">5각</option>
-                    <option value="6">6각</option>
-                    <option value="8">8각</option>
-                    <option value="12">12각</option>
-                    <option value="24">24각</option>
                 </select>
                 <button type="button" class="tool-btn tool-object-select" data-tool="object-select" title="개체 선택" aria-label="개체 선택">
                     <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" style="display:block;">
@@ -792,8 +749,7 @@ def create_app() -> Flask:
                 let paperDragState = null;
                 let textEditorShapeId = null;
                 const shapeTypeSelect = document.getElementById('shapeTypeSelect');
-                const polygonSidesSelect = shapeTypeSelect;
-                let polygonSides = Number(shapeTypeSelect.value) || 6;
+                let polygonSides = 6;
 
                 const PAPER_MARGIN_MM = 3;
                 const PAPER_MARGIN_PIXELS = PAPER_MARGIN_MM * 10;
@@ -2646,7 +2602,7 @@ def create_app() -> Flask:
                 }
 
                 function setActiveToolButton(toolName) {
-                    const effectiveToolName = toolName === 'shape' && ['circle', 'line', 'freeform', 'polygon'].includes(currentTool)
+                    const effectiveToolName = toolName === 'shape' && ['circle', 'line', 'arc', 'polygon', 'freeform'].includes(currentTool)
                         ? 'shape'
                         : toolName;
                     document.querySelectorAll('.tool-btn').forEach((button) => {
@@ -2655,10 +2611,6 @@ def create_app() -> Flask:
                     });
                     document.querySelectorAll('.shape-mode-button').forEach((button) => {
                         const isActive = currentTool && button.dataset.shapeKind === currentTool;
-                        button.classList.toggle('is-active', isActive);
-                    });
-                    document.querySelectorAll('.shape-side-btn').forEach((button) => {
-                        const isActive = currentTool === 'polygon' && Number(button.dataset.sides) === Number(polygonSides);
                         button.classList.toggle('is-active', isActive);
                     });
                     document.querySelectorAll('.color-sample-button').forEach((button) => {
@@ -3294,43 +3246,27 @@ def create_app() -> Flask:
                 function addShape(type) {
                     const selectedShapeType = shapeTypeSelect.value;
                     const normalized = type || selectedShapeType;
-                    currentTool = normalized === 'line' || normalized === 'arc' || normalized === 'freeform' || normalized === 'polygon' || normalized === 'circle'
-                        ? (normalized === 'circle' ? 'arc' : normalized)
-                        : 'polygon';
+                    currentTool = ['line', 'circle', 'arc', 'polygon', 'freeform'].includes(normalized)
+                        ? normalized
+                        : 'line';
                     if (normalized === 'freeform') {
                         isDrawingFreeform = false;
                         freeDrawingPoints = [];
                     }
-                    if (normalized === 'arc' || normalized === 'line') {
+                    if (normalized === 'arc' || normalized === 'line' || normalized === 'circle' || normalized === 'polygon') {
                         activeDraftShape = null;
-                    }
-                    if (normalized === 'polygon') {
-                        const config = getSelectedPolygonConfig();
-                        polygonSides = config.sides;
-                        polygonSidesSelect.dataset.shapeType = config.shapeType;
                     }
                     setActiveToolButton('shape');
                 }
 
-                function getSelectedPolygonConfig() {
-                    const value = polygonSidesSelect.value;
-                    const sides = Number(value) || 6;
-                    return { sides, shapeType: 'polygon' };
-                }
-
                 function syncShapeSelection(kind) {
-                    const nextKind = kind || 'line';
+                    const nextKind = ['line', 'circle', 'arc', 'polygon', 'freeform'].includes(kind) ? kind : 'line';
                     const shapeModeButtons = document.querySelectorAll('.shape-mode-button');
                     shapeModeButtons.forEach((button) => {
                         button.classList.toggle('is-active', button.dataset.shapeKind === nextKind);
                     });
-                    const shapeSideButtons = document.querySelectorAll('.shape-side-btn');
-                    const isPolygon = nextKind === 'polygon';
-                    shapeSideButtons.forEach((button) => {
-                        button.classList.toggle('is-active', isPolygon && Number(button.dataset.sides) === Number(polygonSides));
-                    });
-                    shapeTypeSelect.value = nextKind === 'polygon' ? String(polygonSides) : nextKind === 'arc' ? 'arc' : nextKind;
-                    currentTool = nextKind === 'arc' ? 'arc' : nextKind;
+                    shapeTypeSelect.value = nextKind;
+                    currentTool = nextKind;
                     activeDraftShape = null;
                     setActiveToolButton('shape');
                 }
@@ -3338,38 +3274,7 @@ def create_app() -> Flask:
                 document.querySelectorAll('.shape-mode-button').forEach((button) => {
                     button.addEventListener('click', () => {
                         const kind = button.dataset.shapeKind || 'line';
-                        if (kind === 'polygon') {
-                            polygonSides = Number(polygonSidesSelect.value) || 6;
-                            syncShapeSelection('polygon');
-                            return;
-                        }
                         syncShapeSelection(kind);
-                    });
-                });
-
-                document.querySelectorAll('.shape-side-btn').forEach((button) => {
-                    button.addEventListener('click', () => {
-                        const value = Number(button.dataset.sides) || 6;
-                        polygonSides = value;
-                        polygonSidesSelect.value = String(value);
-                        document.querySelectorAll('.shape-side-btn').forEach((sideButton) => {
-                            sideButton.classList.toggle('is-active', Number(sideButton.dataset.sides) === value);
-                        });
-                        currentTool = 'polygon';
-                        syncShapeSelection('polygon');
-                    });
-                });
-
-                polygonSidesSelect.addEventListener('change', (event) => {
-                    const config = getSelectedPolygonConfig();
-                    polygonSides = config.sides;
-                    currentTool = 'polygon';
-                    activeDraftShape = null;
-                    setActiveToolButton('shape');
-                    polygonSidesSelect.dataset.shapeType = config.shapeType;
-                    const sideButtons = document.querySelectorAll('.shape-side-btn');
-                    sideButtons.forEach((button) => {
-                        button.classList.toggle('is-active', Number(button.dataset.sides) === polygonSides);
                     });
                 });
 
@@ -3509,36 +3414,27 @@ def create_app() -> Flask:
                         return;
                     }
 
-                    if (currentTool === 'polygon') {
-                        if (!activeDraftShape || activeDraftShape.type !== 'polygon') {
+                    if (currentTool === 'polyline') {
+                        if (!activeDraftShape || activeDraftShape.type !== 'polyline') {
                             activeDraftShape = {
                                 id: `shape_${Date.now()}`,
-                                type: 'polygon',
+                                type: 'polyline',
                                 points: [{ x: point.x, y: point.y }],
-                                x: point.x,
-                                y: point.y,
-                                width: 0,
-                                height: 0,
-                                sides: polygonSides,
-                                text: '',
                                 fill: 'transparent',
                                 stroke: defaultStrokeColor,
                                 closed: false,
-                                cadMode: true
+                                cadMode: true,
+                                text: ''
                             };
                         } else {
-                            const draftPoints = Array.isArray(activeDraftShape.points) ? activeDraftShape.points : [{ x: activeDraftShape.x, y: activeDraftShape.y }];
-                            if (draftPoints.length > 2 && Math.hypot(point.x - draftPoints[0].x, point.y - draftPoints[0].y) < 10) {
+                            const draftPoints = Array.isArray(activeDraftShape.points) ? activeDraftShape.points : [];
+                            if (draftPoints.length > 1 && Math.hypot(point.x - draftPoints[0].x, point.y - draftPoints[0].y) < 10) {
                                 const shape = applyDefaultsToNewShape({
                                     ...activeDraftShape,
                                     id: `shape_${Date.now()}`,
-                                    type: 'polygon',
-                                    x: Math.min(...draftPoints.map(p => p.x)),
-                                    y: Math.min(...draftPoints.map(p => p.y)),
-                                    width: Math.max(12, Math.max(...draftPoints.map(p => p.x)) - Math.min(...draftPoints.map(p => p.x))),
-                                    height: Math.max(12, Math.max(...draftPoints.map(p => p.y)) - Math.min(...draftPoints.map(p => p.y))),
+                                    type: 'freeform',
                                     points: draftPoints,
-                                    closed: true,
+                                    closed: false,
                                     fill: 'transparent'
                                 });
                                 shapes.push(shape);
@@ -3948,20 +3844,14 @@ def create_app() -> Flask:
                         return;
                     }
 
-                    if (activeDraftShape && currentTool === 'polygon') {
-                        const centerX = activeDraftShape.centerX;
-                        const centerY = activeDraftShape.centerY;
-                        const polygonPoint = getCanvasPoint(event);
-                        const radius = Math.max(8, Math.hypot(polygonPoint.x - centerX, polygonPoint.y - centerY));
-                        const maxSafeRadius = Math.min(
-                            Math.max(1, centerX),
-                            Math.max(1, currentPaper.width - centerX),
-                            Math.max(1, centerY),
-                            Math.max(1, currentPaper.height - centerY)
-                        );
-                        const safeRadius = Math.min(radius, maxSafeRadius);
-                        const draft = buildRegularPolygonDraft(centerX, centerY, safeRadius, polygonSides, activeDraftShape.shapeType || 'polygon');
-                        activeDraftShape = { ...activeDraftShape, ...draft };
+                    if (activeDraftShape && currentTool === 'polyline') {
+                        const points = Array.isArray(activeDraftShape.points) ? activeDraftShape.points : [];
+                        if (points.length > 0) {
+                            const lastPoint = points[points.length - 1];
+                            if (Math.hypot(pointer.x - lastPoint.x, pointer.y - lastPoint.y) > 2) {
+                                activeDraftShape.points.push({ x: pointer.x, y: pointer.y });
+                            }
+                        }
                         drawPaper();
                         return;
                     }
@@ -4085,21 +3975,19 @@ def create_app() -> Flask:
                         return;
                     }
 
-                    if (activeDraftShape && currentTool === 'polygon') {
-                        const shape = applyDefaultsToNewShape({
-                            ...activeDraftShape,
-                            id: `shape_${Date.now()}`,
-                            type: activeDraftShape.type || 'polygon',
-                            x: activeDraftShape.x,
-                            y: activeDraftShape.y,
-                            width: activeDraftShape.width,
-                            height: activeDraftShape.height,
-                            sides: polygonSides,
-                            shapeType: activeDraftShape.shapeType || 'polygon',
-                            points: [],
-                            fill: 'transparent'
-                        });
-                        if (shape.width > 8 && shape.height > 8) {
+                    if (activeDraftShape && currentTool === 'polyline') {
+                        const draftPoints = Array.isArray(activeDraftShape.points) ? activeDraftShape.points : [];
+                        if (draftPoints.length > 1) {
+                            const shape = applyDefaultsToNewShape({
+                                ...activeDraftShape,
+                                id: `shape_${Date.now()}`,
+                                type: 'freeform',
+                                points: draftPoints,
+                                fill: 'transparent',
+                                stroke: defaultStrokeColor,
+                                closed: false,
+                                text: ''
+                            });
                             shapes.push(shape);
                             selectedShapeId = shape.id;
                             document.getElementById('selectedShape').textContent = shape.id;
@@ -4214,6 +4102,29 @@ def create_app() -> Flask:
                 });
 
                 canvas.addEventListener('dblclick', (event) => {
+                    if (currentTool === 'polyline' && activeDraftShape && Array.isArray(activeDraftShape.points) && activeDraftShape.points.length > 1) {
+                        const draftPoints = activeDraftShape.points;
+                        const shape = applyDefaultsToNewShape({
+                            ...activeDraftShape,
+                            id: `shape_${Date.now()}`,
+                            type: 'freeform',
+                            points: draftPoints,
+                            fill: 'transparent',
+                            stroke: defaultStrokeColor,
+                            closed: false,
+                            text: ''
+                        });
+                        shapes.push(shape);
+                        selectedShapeId = shape.id;
+                        document.getElementById('selectedShape').textContent = shape.id;
+                        activeDraftShape = null;
+                        currentTool = null;
+                        setActiveToolButton(null);
+                        drawPaper();
+                        saveEditorState();
+                        return;
+                    }
+
                     const point = getCanvasPoint(event);
                     const targetShape = [...shapes].reverse().find(shape => {
                         if (!shapeIsClosed(shape)) return false;
