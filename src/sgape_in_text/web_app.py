@@ -381,6 +381,7 @@ def create_app() -> Flask:
                     width: min(320px, 32vw);
                     min-width: 220px;
                     min-height: 260px;
+                    height: 420px;
                     max-width: calc(100% - 32px);
                     max-height: calc(100% - 32px);
                     background: rgba(255,255,255,0.94);
@@ -392,10 +393,31 @@ def create_app() -> Flask:
                     z-index: 20;
                     resize: both;
                     overflow: auto;
+                    transition: opacity 0.15s ease, transform 0.15s ease;
+                }
+                .sidebar.is-hidden {
+                    display: none;
                 }
                 .sidebar.is-dragging {
                     user-select: none;
                     cursor: grabbing;
+                }
+                .property-window-toggle {
+                    position: absolute;
+                    right: 18px;
+                    top: 18px;
+                    z-index: 21;
+                    display: none;
+                    padding: 8px 12px;
+                    border-radius: 999px;
+                    background: rgba(15, 23, 42, 0.8);
+                    color: #fff;
+                    border: 1px solid rgba(255,255,255,0.2);
+                    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.18);
+                    cursor: pointer;
+                }
+                .property-window-toggle.is-visible {
+                    display: inline-flex;
                 }
                 .sidebar-header {
                     display: flex;
@@ -654,10 +676,10 @@ def create_app() -> Flask:
                         <textarea id="shapeTextEditor" rows="4" style="width:220px; min-height:80px; resize:vertical; font-size:15px; line-height:1.4; border:1px solid #cbd5e1; border-radius:8px; padding:8px;"> </textarea>
                     </div>
 
-                    <aside id="propertyWindow" class="sidebar">
+                    <aside id="propertyWindow" class="sidebar" style="width: 320px; height: 420px; right: 18px; top: 18px; left: auto;">
                         <div class="sidebar-header" aria-label="속성 창 이동">
                             <h3>도형 속성</h3>
-                            <button type="button" class="tool-btn" style="padding:4px 8px; font-size:12px; min-width:auto;" aria-label="속성 창 닫기">⤢</button>
+                            <button type="button" id="propertyWindowClose" class="tool-btn" style="padding:4px 8px; font-size:12px; min-width:auto;" aria-label="속성 창 닫기">⤢</button>
                         </div>
                         <div class="sidebar-inner">
                             <div class="field">
@@ -1039,6 +1061,37 @@ def create_app() -> Flask:
 
                 const propertyWindow = document.getElementById('propertyWindow');
                 const propertyWindowHeader = propertyWindow ? propertyWindow.querySelector('.sidebar-header') : null;
+                const propertyWindowCloseButton = document.getElementById('propertyWindowClose');
+                const propertyWindowToggleButton = document.createElement('button');
+                propertyWindowToggleButton.type = 'button';
+                propertyWindowToggleButton.className = 'property-window-toggle';
+                propertyWindowToggleButton.textContent = '속성창 열기';
+                propertyWindowToggleButton.setAttribute('aria-label', '속성창 열기');
+                propertyWindowToggleButton.setAttribute('aria-expanded', 'true');
+                propertyWindowToggleButton.addEventListener('click', () => {
+                    if (!propertyWindow) return;
+                    const shouldShow = propertyWindow.classList.contains('is-hidden');
+                    setPropertyWindowVisible(shouldShow);
+                });
+                const canvasPanel = document.querySelector('.canvas-panel');
+                if (canvasPanel) {
+                    canvasPanel.appendChild(propertyWindowToggleButton);
+                }
+
+                function setPropertyWindowVisible(visible) {
+                    if (!propertyWindow) return;
+                    const isVisible = Boolean(visible);
+                    propertyWindow.classList.toggle('is-hidden', !isVisible);
+                    propertyWindowToggleButton.classList.toggle('is-visible', !isVisible);
+                    propertyWindowToggleButton.setAttribute('aria-expanded', String(isVisible));
+                    propertyWindowToggleButton.textContent = isVisible ? '속성창 닫기' : '속성창 열기';
+                    propertyWindowToggleButton.title = isVisible ? '속성창 닫기' : '속성창 열기';
+                }
+
+                if (propertyWindowCloseButton) {
+                    propertyWindowCloseButton.addEventListener('click', () => setPropertyWindowVisible(false));
+                }
+
                 let propertyWindowDragState = null;
 
                 if (propertyWindowHeader) {
@@ -1072,7 +1125,32 @@ def create_app() -> Flask:
                     }
                 });
 
-                window.addEventListener('resize', updateCanvasSize);
+                function applyPropertyWindowDefaults() {
+                    if (!propertyWindow) return;
+                    const preferredWidth = Math.min(340, Math.max(260, Math.round((canvasPanel ? canvasPanel.clientWidth : 980) * 0.27)));
+                    const preferredHeight = Math.min(460, Math.max(320, Math.round((canvasPanel ? canvasPanel.clientHeight : 720) * 0.62)));
+                    propertyWindow.style.width = `${preferredWidth}px`;
+                    propertyWindow.style.height = `${preferredHeight}px`;
+                    propertyWindow.style.right = '18px';
+                    propertyWindow.style.top = '18px';
+                    propertyWindow.style.left = 'auto';
+                    propertyWindow.classList.remove('is-hidden');
+                    propertyWindowToggleButton.classList.remove('is-visible');
+                    propertyWindowToggleButton.textContent = '속성창 닫기';
+                    propertyWindowToggleButton.title = '속성창 닫기';
+                    propertyWindowToggleButton.setAttribute('aria-expanded', 'true');
+                }
+
+                const ensurePropertyWindowDefaults = applyPropertyWindowDefaults;
+
+                window.addEventListener('resize', () => {
+                    if (!propertyWindow || propertyWindow.classList.contains('is-hidden')) {
+                        return;
+                    }
+                    applyPropertyWindowDefaults();
+                    updateCanvasSize();
+                });
+                ensurePropertyWindowDefaults();
 
                 function shapeIsClosed(shape) {
                     if (!shape || typeof shape !== 'object') return true;
@@ -1414,18 +1492,26 @@ def create_app() -> Flask:
                     return Number.isFinite(value) && value > 0 ? value : 0.05;
                 }
 
+                function getPaperCenter() {
+                    const viewportWidth = canvas.clientWidth || canvas.width;
+                    const viewportHeight = canvas.clientHeight || canvas.height;
+                    return {
+                        x: viewportWidth / 2 + (Number(paperPan.x) || 0),
+                        y: viewportHeight / 2 + (Number(paperPan.y) || 0)
+                    };
+                }
+
                 function getPaperFrame() {
                     const width = currentPaper.width * paperZoom;
                     const height = currentPaper.height * paperZoom;
-                    const viewportWidth = canvas.clientWidth || canvas.width;
-                    const viewportHeight = canvas.clientHeight || canvas.height;
-                    const centerX = viewportWidth / 2 + paperPan.x;
-                    const centerY = viewportHeight / 2 + paperPan.y;
+                    const { x: centerX, y: centerY } = getPaperCenter();
                     return {
                         x: centerX - width / 2,
                         y: centerY - height / 2,
                         width,
-                        height
+                        height,
+                        centerX,
+                        centerY
                     };
                 }
 
@@ -2268,8 +2354,7 @@ def create_app() -> Flask:
                     ctx.fillRect(0, 0, viewportWidth, viewportHeight);
 
                     const gridSize = 24 * paperZoom;
-                    const originX = viewportWidth / 2 + paperPan.x;
-                    const originY = viewportHeight / 2 + paperPan.y;
+                    const { x: originX, y: originY } = getPaperCenter();
                     ctx.strokeStyle = 'rgba(148, 163, 184, 0.42)';
                     ctx.lineWidth = 1;
                     for (let x = Math.floor((originX % gridSize) - gridSize); x <= viewportWidth + gridSize; x += gridSize) {
@@ -4176,11 +4261,16 @@ def create_app() -> Flask:
                     const worldX = (pointerX - frame.x) / paperZoom;
                     const worldY = (pointerY - frame.y) / paperZoom;
 
+                    const nextWidth = currentPaper.width * nextZoom;
+                    const nextHeight = currentPaper.height * nextZoom;
+                    const viewportCenterX = viewportWidth / 2;
+                    const viewportCenterY = viewportHeight / 2;
+
                     paperZoom = nextZoom;
-                    const newFrameX = pointerX - worldX * paperZoom;
-                    const newFrameY = pointerY - worldY * paperZoom;
-                    paperPan.x = newFrameX - (viewportWidth / 2 - (currentPaper.width * paperZoom) / 2);
-                    paperPan.y = newFrameY - (viewportHeight / 2 - (currentPaper.height * paperZoom) / 2);
+                    const nextPaperX = pointerX - worldX * paperZoom;
+                    const nextPaperY = pointerY - worldY * paperZoom;
+                    paperPan.x = nextPaperX - viewportCenterX + nextWidth / 2;
+                    paperPan.y = nextPaperY - viewportCenterY + nextHeight / 2;
                     clampPaperPan();
                     drawPaper();
                     saveEditorState();

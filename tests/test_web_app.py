@@ -215,6 +215,18 @@ def test_web_app_uses_cad_style_shape_modes_only():
     assert b"data-shape-kind=\"circle\"" not in response.data
 
 
+def test_web_app_uses_centered_paper_metrics_and_float_window_defaults():
+    app = create_app()
+    client = app.test_client()
+
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"getPaperCenter" in response.data
+    assert b"applyPropertyWindowDefaults" in response.data
+    assert b"aria-expanded" in response.data
+
+
 def test_web_app_includes_trim_cut_keep_and_reconstruction_logic():
     app = create_app()
     client = app.test_client()
