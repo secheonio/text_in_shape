@@ -375,15 +375,48 @@ def create_app() -> Flask:
                     border-radius: 10px;
                 }
                 .sidebar {
-                    width: 300px;
-                    background: var(--panel);
-                    border: 1px solid var(--line);
-                    border-radius: 10px;
-                    padding: 16px;
+                    position: absolute;
+                    right: 18px;
+                    top: 18px;
+                    width: min(320px, 32vw);
+                    min-width: 220px;
+                    min-height: 260px;
+                    max-width: calc(100% - 32px);
+                    max-height: calc(100% - 32px);
+                    background: rgba(255,255,255,0.94);
+                    border: 1px solid rgba(148, 163, 184, 0.7);
+                    border-radius: 12px;
+                    padding: 0;
+                    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.15);
+                    backdrop-filter: blur(8px);
+                    z-index: 20;
+                    resize: both;
+                    overflow: auto;
+                }
+                .sidebar.is-dragging {
+                    user-select: none;
+                    cursor: grabbing;
+                }
+                .sidebar-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: 12px;
+                    padding: 12px 14px 10px;
+                    border-bottom: 1px solid rgba(148, 163, 184, 0.55);
+                    background: rgba(248, 250, 252, 0.9);
+                    cursor: grab;
+                    user-select: none;
+                }
+                .sidebar-header:active {
+                    cursor: grabbing;
                 }
                 .sidebar h3 {
-                    margin: 0 0 12px 0;
+                    margin: 0;
                     font-size: 18px;
+                }
+                .sidebar-inner {
+                    padding: 16px;
                 }
                 .field {
                     margin-bottom: 12px;
@@ -620,58 +653,56 @@ def create_app() -> Flask:
                     <div id="textEditorOverlay" style="position:absolute; display:none; z-index:30; pointer-events:auto; background:rgba(255,255,255,0.96); border:1px solid #cbd5e1; border-radius:10px; box-shadow:0 10px 25px rgba(15,23,42,0.12); padding:6px;">
                         <textarea id="shapeTextEditor" rows="4" style="width:220px; min-height:80px; resize:vertical; font-size:15px; line-height:1.4; border:1px solid #cbd5e1; border-radius:8px; padding:8px;"> </textarea>
                     </div>
+
+                    <aside id="propertyWindow" class="sidebar">
+                        <div class="sidebar-header" aria-label="속성 창 이동">
+                            <h3>도형 속성</h3>
+                            <button type="button" class="tool-btn" style="padding:4px 8px; font-size:12px; min-width:auto;" aria-label="속성 창 닫기">⤢</button>
+                        </div>
+                        <div class="sidebar-inner">
+                            <div class="field">
+                                <label>선택된 도형</label>
+                                <div id="selectedShape">없음</div>
+                            </div>
+                            <div class="field">
+                                <label>그리려는 선 색</label>
+                                <div class="color-row">
+                                    <div class="color-field-stack">
+                                        <div class="color-picker-control">
+                                            <div class="color-picker-wrap is-active" id="strokeColorWrap">
+                                                <input id="defaultStrokeColor" type="color" value="#222222" aria-label="선 색" />
+                                            </div>
+                                            <button type="button" class="color-sample-button" data-tool="eyedropper" data-kind="stroke" title="선 색상 추출" aria-label="선 색상 추출">🎯</button>
+                                        </div>
+                                        <div class="recent-color-row" id="recentStrokeColors"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>그리려는 도형 내부 색</label>
+                                <div class="color-row">
+                                    <div class="color-field-stack">
+                                        <div class="color-picker-control">
+                                            <div class="color-picker-wrap" id="fillColorWrap">
+                                                <input id="defaultFillColor" type="color" value="#ffffff" aria-label="도형 내부 색" />
+                                            </div>
+                                            <button type="button" class="color-sample-button" data-tool="eyedropper" data-kind="fill" title="도형 내부 색상 추출" aria-label="도형 내부 색상 추출">🎯</button>
+                                        </div>
+                                        <div class="recent-color-row" id="recentFillColors"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label>폰트 크기</label>
+                                <input id="fontSize" type="number" value="40" min="8" max="200" />
+                            </div>
+                            <div class="field">
+                                <label>회전 (° / +시계, -반시계)</label>
+                                <input id="rotationDegrees" type="number" value="0" min="-360" max="360" step="1" aria-label="도형 회전 각도" />
+                            </div>
+                        </div>
+                    </aside>
                 </div>
-
-                <aside class="sidebar">
-                    <h3>도형 속성</h3>
-                    <div class="field">
-                        <label>선택된 도형</label>
-                        <div id="selectedShape">없음</div>
-                    </div>
-                    <div class="field">
-                        <label>그리려는 선 색</label>
-                        <div class="color-row">
-                            <div class="color-field-stack">
-                                <div class="color-picker-control">
-                                    <div class="color-picker-wrap is-active" id="strokeColorWrap">
-                                        <input id="defaultStrokeColor" type="color" value="#222222" aria-label="선 색" />
-                                    </div>
-                                    <button type="button" class="color-sample-button" data-tool="eyedropper" data-kind="stroke" title="선 색상 추출" aria-label="선 색상 추출">🎯</button>
-                                </div>
-                                <div class="recent-color-row" id="recentStrokeColors"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>그리려는 도형 내부 색</label>
-                        <div class="color-row">
-                            <div class="color-field-stack">
-                                <div class="color-picker-control">
-                                    <div class="color-picker-wrap" id="fillColorWrap">
-                                        <input id="defaultFillColor" type="color" value="#ffffff" aria-label="도형 내부 색" />
-                                    </div>
-                                    <button type="button" class="color-sample-button" data-tool="eyedropper" data-kind="fill" title="도형 내부 색상 추출" aria-label="도형 내부 색상 추출">🎯</button>
-                                </div>
-                                <div class="recent-color-row" id="recentFillColors"></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <label>폰트 크기</label>
-                        <input id="fontSize" type="number" value="40" min="8" max="200" />
-                    </div>
-                    <div class="field">
-                        <label>회전 (° / +시계, -반시계)</label>
-                        <input id="rotationDegrees" type="number" value="0" min="-360" max="360" step="1" aria-label="도형 회전 각도" />
-                    </div>
-                </aside>
-            </div>
-
-            <script>
-                const canvas = document.getElementById('editorCanvas');
-                const eyedropperMagnifier = document.getElementById('eyedropperMagnifier');
-                const eyedropperMagnifierCtx = eyedropperMagnifier ? eyedropperMagnifier.getContext('2d') : null;
-                const paperSelect = document.getElementById('paperSelect');
                 const customPaperWidthInput = document.getElementById('customPaperWidth');
                 const customPaperHeightInput = document.getElementById('customPaperHeight');
                 const rotationDegreesInput = document.getElementById('rotationDegrees');
@@ -986,15 +1017,62 @@ def create_app() -> Flask:
                 }
 
                 function resizeCanvasToPaper() {
-                    const totalWidth = currentPaper.width + PAPER_MARGIN_PIXELS * 2;
-                    const totalHeight = currentPaper.height + PAPER_MARGIN_PIXELS * 2;
-                    canvas.width = totalWidth;
-                    canvas.height = totalHeight;
+                    const rect = canvas.getBoundingClientRect();
+                    const width = Math.max(900, Math.round(rect.width || window.innerWidth * 0.72));
+                    const height = Math.max(600, Math.round(rect.height || window.innerHeight * 0.68));
+                    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+                    canvas.width = Math.max(1, Math.round(width * ratio));
+                    canvas.height = Math.max(1, Math.round(height * ratio));
                     canvas.style.width = '100%';
-                    canvas.style.height = 'auto';
-                    canvas.style.maxHeight = '75vh';
-                    canvas.style.objectFit = 'contain';
+                    canvas.style.height = '100%';
+                    canvas.style.maxHeight = 'none';
+                    canvas.style.objectFit = 'fill';
+                    if (ctx) {
+                        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+                    }
                 }
+
+                function updateCanvasSize() {
+                    resizeCanvasToPaper();
+                    drawPaper();
+                }
+
+                const propertyWindow = document.getElementById('propertyWindow');
+                const propertyWindowHeader = propertyWindow ? propertyWindow.querySelector('.sidebar-header') : null;
+                let propertyWindowDragState = null;
+
+                if (propertyWindowHeader) {
+                    propertyWindowHeader.addEventListener('mousedown', (event) => {
+                        if (event.target.closest('button')) {
+                            return;
+                        }
+                        const rect = propertyWindow.getBoundingClientRect();
+                        propertyWindowDragState = {
+                            offsetX: event.clientX - rect.left,
+                            offsetY: event.clientY - rect.top,
+                        };
+                        propertyWindow.classList.add('is-dragging');
+                    });
+                }
+
+                document.addEventListener('mousemove', (event) => {
+                    if (!propertyWindowDragState || !propertyWindow) return;
+                    const hostRect = propertyWindow.parentElement.getBoundingClientRect();
+                    const left = Math.min(Math.max(event.clientX - hostRect.left - propertyWindowDragState.offsetX, 10), hostRect.width - propertyWindow.offsetWidth - 10);
+                    const top = Math.min(Math.max(event.clientY - hostRect.top - propertyWindowDragState.offsetY, 10), hostRect.height - propertyWindow.offsetHeight - 10);
+                    propertyWindow.style.left = `${left}px`;
+                    propertyWindow.style.top = `${top}px`;
+                    propertyWindow.style.right = 'auto';
+                });
+
+                document.addEventListener('mouseup', () => {
+                    if (propertyWindowDragState) {
+                        propertyWindowDragState = null;
+                        propertyWindow.classList.remove('is-dragging');
+                    }
+                });
+
+                window.addEventListener('resize', updateCanvasSize);
 
                 function shapeIsClosed(shape) {
                     if (!shape || typeof shape !== 'object') return true;
@@ -1339,9 +1417,13 @@ def create_app() -> Flask:
                 function getPaperFrame() {
                     const width = currentPaper.width * paperZoom;
                     const height = currentPaper.height * paperZoom;
+                    const viewportWidth = canvas.clientWidth || canvas.width;
+                    const viewportHeight = canvas.clientHeight || canvas.height;
+                    const centerX = viewportWidth / 2 + paperPan.x;
+                    const centerY = viewportHeight / 2 + paperPan.y;
                     return {
-                        x: PAPER_MARGIN_PIXELS + paperPan.x,
-                        y: PAPER_MARGIN_PIXELS + paperPan.y,
+                        x: centerX - width / 2,
+                        y: centerY - height / 2,
                         width,
                         height
                     };
@@ -1358,8 +1440,8 @@ def create_app() -> Flask:
 
                 function getCanvasPoint(event) {
                     const rect = canvas.getBoundingClientRect();
-                    const x = (event.clientX - rect.left) * (canvas.width / rect.width);
-                    const y = (event.clientY - rect.top) * (canvas.height / rect.height);
+                    const x = event.clientX - rect.left;
+                    const y = event.clientY - rect.top;
                     const frame = getPaperFrame();
                     return {
                         x: (x - frame.x) / paperZoom,
@@ -2178,9 +2260,30 @@ def create_app() -> Flask:
 
                 function drawPaper() {
                     normalizePaperState();
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = '#ececec';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    const viewportWidth = canvas.clientWidth || canvas.width;
+                    const viewportHeight = canvas.clientHeight || canvas.height;
+                    ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+                    ctx.clearRect(0, 0, viewportWidth, viewportHeight);
+                    ctx.fillStyle = '#e5e7eb';
+                    ctx.fillRect(0, 0, viewportWidth, viewportHeight);
+
+                    const gridSize = 24 * paperZoom;
+                    const originX = viewportWidth / 2 + paperPan.x;
+                    const originY = viewportHeight / 2 + paperPan.y;
+                    ctx.strokeStyle = 'rgba(148, 163, 184, 0.42)';
+                    ctx.lineWidth = 1;
+                    for (let x = Math.floor((originX % gridSize) - gridSize); x <= viewportWidth + gridSize; x += gridSize) {
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x, viewportHeight);
+                        ctx.stroke();
+                    }
+                    for (let y = Math.floor((originY % gridSize) - gridSize); y <= viewportHeight + gridSize; y += gridSize) {
+                        ctx.beginPath();
+                        ctx.moveTo(0, y);
+                        ctx.lineTo(viewportWidth, y);
+                        ctx.stroke();
+                    }
 
                     const frame = getPaperFrame();
                     const paperX = Number.isFinite(frame.x) ? frame.x : 0;
@@ -2190,11 +2293,6 @@ def create_app() -> Flask:
 
                     ctx.fillStyle = '#ffffff';
                     ctx.fillRect(paperX, paperY, paperWidth, paperHeight);
-
-                    ctx.strokeStyle = '#444';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(paperX, paperY, paperWidth, paperHeight);
-
                     ctx.strokeStyle = '#444';
                     ctx.lineWidth = 2;
                     ctx.strokeRect(paperX, paperY, paperWidth, paperHeight);
@@ -4060,25 +4158,29 @@ def create_app() -> Flask:
                     }
 
                     const rect = canvas.getBoundingClientRect();
-                    const pointerX = (event.clientX - rect.left) * (canvas.width / rect.width);
-                    const pointerY = (event.clientY - rect.top) * (canvas.height / rect.height);
+                    const pointerX = event.clientX - rect.left;
+                    const pointerY = event.clientY - rect.top;
+                    const viewportWidth = canvas.clientWidth || canvas.width;
+                    const viewportHeight = canvas.clientHeight || canvas.height;
                     const frame = getPaperFrame();
                     const insidePaper = pointerX >= frame.x && pointerX <= frame.x + frame.width &&
                         pointerY >= frame.y && pointerY <= frame.y + frame.height;
 
-                    if (!insidePaper) {
+                    if (!insidePaper && !event.shiftKey) {
                         return;
                     }
 
                     event.preventDefault();
                     const delta = event.deltaY || event.wheelDelta || 0;
                     const nextZoom = clampZoom(paperZoom * (delta > 0 ? 0.9 : 1.1));
-                    const localX = (pointerX - frame.x) / paperZoom;
-                    const localY = (pointerY - frame.y) / paperZoom;
+                    const worldX = (pointerX - frame.x) / paperZoom;
+                    const worldY = (pointerY - frame.y) / paperZoom;
 
                     paperZoom = nextZoom;
-                    paperPan.x = pointerX - localX * paperZoom - PAPER_MARGIN_PIXELS;
-                    paperPan.y = pointerY - localY * paperZoom - PAPER_MARGIN_PIXELS;
+                    const newFrameX = pointerX - worldX * paperZoom;
+                    const newFrameY = pointerY - worldY * paperZoom;
+                    paperPan.x = newFrameX - (viewportWidth / 2 - (currentPaper.width * paperZoom) / 2);
+                    paperPan.y = newFrameY - (viewportHeight / 2 - (currentPaper.height * paperZoom) / 2);
                     clampPaperPan();
                     drawPaper();
                     saveEditorState();
