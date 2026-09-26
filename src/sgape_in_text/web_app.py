@@ -2495,7 +2495,9 @@ def create_app() -> Flask:
                 }
 
                 document.getElementById('swapPaperOrientation').addEventListener('click', () => {
-                    const selectedPaperName = paperSelect.value;
+                    const selectedPaperName = (currentPaper && currentPaper.label && currentPaper.label !== 'Custom')
+                        ? currentPaper.label
+                        : paperSelect.value;
                     const currentWidth = Number(customPaperWidthInput.value || 210);
                     const currentHeight = Number(customPaperHeightInput.value || 297);
                     const swappedWidth = currentHeight;
@@ -4539,7 +4541,10 @@ def create_app() -> Flask:
                     syncCustomInputsToSelectedPaper();
                     applyPaperSelection('A4');
                 } else {
-                    paperSelect.value = currentPaper.label === 'Custom' ? 'Custom' : paperSelect.value;
+                    const restoredPaperName = currentPaper && currentPaper.label && currentPaper.label !== 'Custom'
+                        ? currentPaper.label
+                        : 'Custom';
+                    paperSelect.value = restoredPaperName;
                     if (paperSelect.value === 'Custom') {
                         customPaperWidthInput.value = currentPaper.width / 10;
                         customPaperHeightInput.value = currentPaper.height / 10;
